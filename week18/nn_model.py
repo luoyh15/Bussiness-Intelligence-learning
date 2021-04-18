@@ -134,7 +134,7 @@ def train(train_set, test_set, model, epochs=1000):
         train_loss = train_step(train_set, model=model, optimizer=optimizer, criterion=criterion, regularization=regularization)
         # print statistics
         test_loss = eval(test_set, model=model, criterion=criterion)
-        print(f'[{epoch+1}], train loss:{train_loss*100000:.3f}, test loss:{test_loss*100000:.3f}')
+        print(f'[{epoch+1}], train loss:{train_loss:.3f}, test loss:{test_loss:.3f}')
         # save the best model's parameters
         if test_loss < min_loss:
             best_model = model.state_dict()
@@ -151,15 +151,6 @@ if __name__ == '__main__':
     train_X = pd.read_pickle(path+'train_X.pkl')
     test_X = pd.read_pickle(path+'test_X.pkl')
     train_y = pd.read_pickle(path+'train_y.pkl')
-    # 归一化y
-    # train_y_max, train_y_min = train_y.max(), train_y.min()
-    # train_y = (train_y-train_y_min)/(train_y_max-train_y_min)
-    # print(f'y: max-min, {train_y_max-train_y_min}')
-    train_y = train_y.apply(np.log1p)
-    train_y_mean, train_y_std = train_y.mean(), train_y.std()
-    train_y = (train_y-train_y_mean)/train_y_std
-    print(f'y: mean {train_y_mean}, std {train_y_std}')
-    
 
     categorical_cols = ['model', 'brand', 'bodyType', 'fuelType', 'notRepairedDamage', 'city']
     numerical_cols = [col for col in train_X.columns if col not in categorical_cols]
@@ -208,6 +199,5 @@ if __name__ == '__main__':
         model.reset_parameter()
 
     submission = pd.read_csv('data/used_car_sample_submit.csv')
-    submission['price'] = np.expm1(torch.stack(results).mean(dim=0)*train_y_std+train_y_mean)
-    # submission['price'] = torch.stack(results).mean(dim=0)*(train_y_max-train_y_min)+train_y_min
+    submission['price'] = torch.stack(results).mean(dim=0)
     submission.to_csv('nn_submission.csv')
